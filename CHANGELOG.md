@@ -5,6 +5,13 @@ Historial de cambios reales del proyecto Articulos compuestos.
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/),  
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 
+## [Sin versionar] - 2026-05-22 (alineacion documental)
+
+### Cambiado
+
+- `docs/PLAN_MAESTRO_IMPLEMENTACION.md`, `docs/CONTEXT.md` y `docs/ARTICULOS_MVP_SPEC.md` alineados al estado operativo (sin narrativa de fases pendientes ya cerradas).
+- README: nota sobre migraciones `exports` para CSV.
+
 ## [Sin versionar] - 2026-05-22 (cierre UX operativo)
 
 ### Agregado

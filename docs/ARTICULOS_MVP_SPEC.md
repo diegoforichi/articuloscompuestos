@@ -45,14 +45,34 @@ La app permite:
 
 ## Modelo de datos vigente
 
+### Catalogo y precios
+
 - `component_types`
 - `components`
 - `component_price_histories`
 - `products`
 - `product_components`
 - `product_price_histories`
-- `integration_settings`
+
+### Multi-tenant y acceso
+
+- `tenants` (`recalculation_mode`: `manual` | `automatic`)
+- `users` (`tenant_id`, `is_super_admin`)
+
+### Integracion y auditoria
+
+- `integration_settings` (una fila activa por `tenant_id`, indice unique en BD)
 - `sync_logs`
+
+### Stock
+
+- `stock_entries`, `stock_entry_items`
+- `stock_movements` (`reference_type`, `reference_id`, `notes`)
+- `component_stocks`
+
+### Infraestructura Filament (exportacion CSV)
+
+- `exports`, `imports`, `failed_import_rows` (requieren `php artisan migrate`)
 
 ## Stock (operativo)
 
@@ -70,11 +90,19 @@ La app permite:
 - Usuarios tenant: alta en create (onboarding opcional) o en **Usuarios del tenant** al editar.
 - `User::canAccessPanel()`: superadmin o usuario con tenant activo.
 
-## Recalculo de precios
+## Recalculo de precios (operativo)
 
-- Modo manual (actual).
-- Modo automatico por tenant (base tecnica iniciada).
-- En automatico, al cambiar costo de componente se encola job de recálculo.
+- Cada tenant define `recalculation_mode` en **Tenants**:
+  - **manual**: cambio de precio de componente no encola recalculo; el usuario recalcula productos desde el panel.
+  - **automatic**: al actualizar precio de un componente se encola `RecalculateProductsForComponentJob` (cola `default`).
+- Recalculo manual por producto o en lote sigue disponible en todo momento.
+- Requiere worker/cron de cola en hosting para el modo automatico (ver `README.md`).
+
+## Exportacion y UX operativa
+
+- CSV en listados: **Movimientos de stock**, **Saldos de componentes**, **Productos** (Filament `ExportAction`, solo CSV).
+- Referencias legibles en movimientos: `Entrada #<id>`, `Consumo producto <codigo>` (ref. tecnica opcional en columnas ocultas).
+- Integracion: mensajes claros si el tenant ya tiene configuracion; boton **Crear** oculto cuando no hay tenants libres.
 
 ## Criterio de implementacion
 

@@ -25,7 +25,7 @@ Este indice referencia solo documentacion activa y especifica del proyecto.
 
 ## Documentos vigentes
 
-- `PLAN_MAESTRO_IMPLEMENTACION.md`: fuente unica de estado actual, pendientes y criterios de cierre.
+- `PLAN_MAESTRO_IMPLEMENTACION.md`: estado implementado, fases cerradas y pendientes solo de produccion/operacion.
 - `CONTEXT.md`: contexto tecnico y operativo actual.
 - `ARTICULOS_MVP_SPEC.md`: reglas funcionales, modelo de datos y sincronizacion.
 - `ARTICULOS_FUNCIONALIDADES_CLIENTE.md`: explicacion en lenguaje de negocio.

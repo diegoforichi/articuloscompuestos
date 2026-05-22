@@ -2,43 +2,26 @@
 
 ## Objetivo
 
-Concentrar en un solo documento el estado real del sistema, lo que falta implementar y el criterio de cierre por fase para evitar contradicciones entre documentos.
+Concentrar en un solo documento el estado real del sistema, lo implementado hoy, lo pendiente para produccion y el criterio de cierre por fase.
 
-## Estado actual confirmado
+## Estado actual confirmado (2026-05-22)
 
-### Dominio y operacion actual
+### Dominio y operacion
 
-- La app administra productos compuestos por componentes.
-- Se calcula costo y precio de venta por composicion.
-- Se sincroniza el producto final con e-factura.
-- Existe historial de precios y estado de sincronizacion (`draft`, `synced`, `dirty`, `error`).
+- Productos compuestos por componentes; costo y precio por composicion.
+- Sync del producto final con e-factura; historial y estados `draft`, `synced`, `dirty`, `error`.
+- Multi-tenant con aislamiento por `tenant_id` en recursos de negocio.
+- Una integracion e-factura por tenant (formulario, UI y unique en BD).
+- Stock: entradas, movimientos, saldos, consumo desde producto sin stock negativo.
+- Recalculo manual y automatico por tenant (job en cola).
+- Exportacion CSV en movimientos, saldos y productos.
+- Tenants: onboarding admin solo en alta; usuarios en **Usuarios del tenant** al editar; badge **Sin usuarios**.
 
-### Base tecnica implementada recientemente
+### Referencia operativa
 
-- Base multi-tenant cerrada para prueba:
-  - tabla `tenants`;
-  - `tenant_id` agregado en tablas de negocio principales;
-  - `is_super_admin` en `users`;
-  - acceso de panel bloqueado para tenant inactivo o usuario sin tenant (excepto superadmin);
-  - aislamiento de consultas por tenant en recursos de negocio.
-- Base de stock por componentes operativa en panel:
-  - `stock_entries`,
-  - `stock_entry_items`,
-  - `stock_movements`,
-  - `component_stocks`,
-  - consumo desde productos con bloqueo de stock insuficiente.
-- Recalculo automatico endurecido:
-  - `RecalculateProductsForComponentJob`;
-  - disparo por cambio de precio de componente segun modo tenant;
-  - retries, backoff y logs por tenant/componente.
-- Restriccion superadmin consistente:
-  - recurso de Integraciones visible para superadmin;
-  - recurso de Tenants visible para superadmin.
-- Flujo operativo estabilizado:
-  - botones **Crear** en listados de Tenants y Entradas de stock;
-  - resolucion de tenant con fallback a `default` activo;
-  - checklist UAT local en `docs/UAT_LOCAL_MULTITENANT.md`;
-  - guia de actualizacion single-tenant → multi-tenant en `docs/DEPLOY_SHARED_HOSTING.md`.
+- Checklist local: `docs/UAT_LOCAL_MULTITENANT.md`
+- Deploy: `docs/DEPLOY_SHARED_HOSTING.md`
+- Resumen ejecutivo: `README.md`
 
 ## Contrato e-factura: literal y validado
 
@@ -49,22 +32,16 @@ Referencia de chat con texto original del administrador: [Integracion inicial Za
 Resumen literal recuperado:
 
 - URL base demo: `https://abelen56-002-site2.gtempurl.com`
-- Seguridad:
-  - `Authorization: Bearer + Token`
-  - `RUTEmisor: rucemisor`
-- Endpoints informados:
-  - `POST /api/extsys/addArticle`
-  - `PUT /api/extsys/updateArticle`
+- Seguridad: `Authorization: Bearer + Token`, `RUTEmisor: rucemisor`
+- Endpoints: `POST /api/extsys/addArticle`, `PUT /api/extsys/updateArticle`
 
-Nota: por politica de seguridad, en documentacion versionada no se replican tokens reales. Los valores sensibles quedan solo en historial interno y entornos locales controlados.
+Nota: en documentacion versionada no se replican tokens reales.
 
-### Comportamiento implementado/observado
+### Comportamiento implementado
 
-- La app usa:
-  - `Authorization` + `RUTEmisor`;
-  - `Auth` y `Origin` opcionales para ambientes que lo requieren.
-- `addArticle` y `updateArticle` estan implementados en `EFacturaService`.
-- En pruebas previas se observaron diferencias entre payload de update "minimo" y payload efectivo requerido por la API.
+- `Authorization` + `RUTEmisor`; `Auth` y `Origin` opcionales.
+- `addArticle` y `updateArticle` en `EFacturaService`.
+- Update con payload completo (no solo `{id, price}`) por robustez observada en pruebas.
 
 ## Matriz de diferencias: proveedor vs sistema
 
@@ -72,79 +49,46 @@ Nota: por politica de seguridad, en documentacion versionada no se replican toke
 |---|---|---|
 | Seguridad base | Authorization + RUTEmisor | Igual, mas `Auth` y `Origin` opcionales |
 | Alta | `addArticle` | Implementado |
-| Update | se reporto minimo `{id, price}` | Implementacion envia payload completo para robustez |
-| GET remoto | no confirmado | sistema asume fuente de verdad local |
+| Update | minimo `{id, price}` reportado | Payload completo en implementacion |
+| GET remoto | no confirmado | Fuente de verdad local |
 
 ## Decisiones funcionales vigentes
 
-- La integracion e-factura se configura solo por superadmin.
-- El panel operativo principal sigue en `/admin`.
-- Multi-tenant es estrategia base compartida con `tenant_id`.
-- Recalculo puede evolucionar a manual/automatico por tenant.
+- Integracion e-factura: solo superadmin; una configuracion por `tenant_id`.
+- Panel operativo: `/admin` (Filament).
+- Multi-tenant: `tenant_id` en tablas de negocio.
+- Recalculo: `manual` o `automatic` por tenant (ambos operativos).
+- Superadmin sin `tenant_id`: contexto de datos en tenant `default` (`Tenant::DEFAULT_SLUG`).
 
-## Backlog unico priorizado (actualizado)
+## Fases de implementacion (cerradas)
 
-### Fase 1 - Endurecimiento multi-tenant
+| Fase | Resultado |
+|------|-----------|
+| 1 Multi-tenant | Aislamiento por tenant y guardas por rol |
+| 2 Tenants UI | `TenantResource`, onboarding en create, usuarios en relation manager |
+| 3 Stock panel | Entradas, movimientos, saldos, consumo desde productos |
+| 4 Recalculo y cola | Job con retries, logs, modo automatico por tenant |
+| 5 Testing | Suite PHPUnit + Pint en verde |
+| 6 Documentacion base | README, CONTEXT, MVP spec, INDEX, DEPLOY, UAT |
+| 7 Cierre UX operativo | Referencias legibles, CSV, integracion unica con mensajes, docs alineados |
 
-- Estado: completada.
-- Resultado: aislamiento por tenant y guardas por rol aplicados en recursos de negocio.
+## Pendiente para produccion (no es deuda de codigo core)
 
-### Fase 2 - Gestion de tenants en UI
+- [ ] Ejecutar `docs/UAT_LOCAL_MULTITENANT.md` en MySQL de staging/produccion.
+- [ ] Cron/worker de cola en hosting (`queue:work --stop-when-empty`).
+- [ ] `php artisan migrate --force` en servidor (incluye tablas `exports` para CSV).
+- [ ] Credenciales e-factura reales por tenant.
+- [ ] Flujo de sincronizacion mas recuperable ante errores (reintentos UX, guia operador).
+- [ ] Guia breve por rol para usuario final (superadmin vs admin tenant).
 
-- Estado: completada.
-- Resultado: `TenantResource` con CRUD y onboarding basico de admin tenant.
+## Riesgos
 
-### Fase 3 - Stock operativo en panel
-
-- Estado: completada.
-- Resultado: recursos de entradas, movimientos y saldos + consumo desde productos.
-
-### Fase 4 - Recalculo automatico y cola
-
-- Estado: completada.
-- Resultado: job endurecido con logs y retry controlado.
-
-### Fase 5 - Testing gate
-
-- Estado: completada.
-- Resultado: pruebas unitarias/feature ejecutadas + suite completa en verde + Pint aplicado.
-
-### Fase 6 - Cierre documental
-
-- Estado: completada.
-- Resultado: README, CONTEXT, PLAN_MAESTRO y CHANGELOG alineados.
-
-## Riesgos y bloqueos
-
-- Contrato externo e-factura puede cambiar sin versionado formal.
-- Si no se completa aislamiento tenant en toda la UI, hay riesgo de mezcla de datos.
-- En hosting compartido, jobs y tiempos de respuesta requieren estrategia controlada.
+- Contrato e-factura puede cambiar sin versionado formal.
+- Hosting compartido: cola y timeouts limitan recalculo automatico masivo.
+- Sin worker, el modo `automatic` no recalcula hasta procesar la cola.
 
 ## Criterios de aceptacion documental
 
-- No hay contradicciones entre `README`, `CONTEXT`, `ARTICULOS_MVP_SPEC`, `INDEX`.
-- Este documento contiene el backlog completo y priorizado.
-- Se separa claramente:
-  - lo literal del proveedor,
-  - lo validado por implementacion/pruebas.
-- Queda explicito que esta implementado hoy y que falta.
-
-## Checklist de cierre de fase
-
-### Cierre Fase 1
-
-- [x] Docs alineados y fechados.
-- [x] Validacion funcional basica ejecutada.
-- [x] Changelog actualizado.
-
-### Cierre Fase 2
-
-- [x] Tenants y stock con UI operativa.
-- [x] Reglas tenant aplicadas en todo el panel.
-- [x] No hay stock negativo por operaciones normales.
-
-### Cierre Fase 3
-
-- [x] Jobs estables y monitoreados.
-- [ ] Flujo de sincronizacion recuperable ante errores.
-- [ ] Checklist de deploy y post-deploy validado.
+- Sin contradicciones entre `README`, `CONTEXT`, `ARTICULOS_MVP_SPEC`, `INDEX`, `UAT`, `DEPLOY`.
+- Este documento distingue: implementado hoy vs pendiente operativo.
+- Contrato proveedor separado de comportamiento validado en codigo.

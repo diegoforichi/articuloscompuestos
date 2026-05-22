@@ -68,6 +68,8 @@ npm install
 composer run dev
 ```
 
+`php artisan migrate` crea tambien las tablas de exportacion Filament (`exports`, etc.) necesarias para **Exportar CSV** en el panel.
+
 ## Testing y calidad
 
 ```bash
