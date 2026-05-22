@@ -1,8 +1,22 @@
-# Contexto del Proyecto - Panel de Facturas Laravel
+# Contexto del proyecto — Articulos compuestos
 
-## 🎯 Resumen Ejecutivo
+## Resumen ejecutivo
 
-Este es un proyecto Laravel 12 para gestión de facturas, optimizado para hosting compartido con restricciones específicas.
+Laravel 12 con **Filament** para administrar **productos compuestos**: insumos con precio por unidad (**componentes**), armado del producto final, cálculo de costo y precio de venta (utilidad %), historial de precios e integración saliente con **e-factura**. El caso inicial fue una **joyeria**, pero el diseño apunta a **cualquier negocio** que necesite listas de materiales y categorias propias.
+
+Los **tipos de componente** (ej. metal, harina, empaque) son un **catálogo editable** en el panel (`component_types`). Las **unidades** por componente son texto libre (kg, g, hora, etc.).
+
+El proyecto esta optimizado para **hosting compartido** (sin Node en servidor, subir `vendor/` completo). Repo: [articuloscompuestos](https://github.com/diegoforichi/articuloscompuestos).
+
+Estado operativo (panel `/admin`):
+
+- **Tenants**: crear con onboarding opcional de admin; editar sin onboarding; usuarios en relation manager; badge si no hay usuarios.
+- **Integracion**: una configuracion por `tenant_id` (validacion UI + unique en BD).
+- **Stock**: entradas, movimientos con referencia legible, saldos, consumo desde producto con preview de composicion; export CSV.
+- **Productos**: composicion, recalculo manual/automatico por tenant, sync e-factura del producto final.
+- **Roles**: superadmin sin `tenant_id` usa tenant `default` (`Tenant::DEFAULT_SLUG`) para datos operativos.
+
+Checklist de prueba local: `docs/UAT_LOCAL_MULTITENANT.md`.
 
 ---
 
@@ -101,28 +115,43 @@ tar -czf laravel-app.tar.gz \
 
 ---
 
+## Estado de evolucion acordada
+
+### Implementado
+
+- Entradas por documento con detalle de componentes y costo.
+- Libro de movimientos (`IN`, `OUT`) y snapshot de saldos por componente.
+- Validaciones transaccionales para bloqueo de stock negativo.
+- Flujo de consumo de stock desde productos.
+
+### Pendiente para declarar listo en produccion
+
+- Ejecutar checklist UAT integral en entorno real.
+- Ajustar runbook final de cola segun cron/limits del hosting.
+- Documentar procedimiento operativo por rol (superadmin y admin tenant).
+
+---
+
+## Fuente de verdad de pendientes
+
+El backlog consolidado, criterios de aceptacion y checklist de cierre de fase se mantienen en:
+
+- `docs/PLAN_MAESTRO_IMPLEMENTACION.md`
+
+---
+
 ## 🎨 Estructura del Proyecto
 
 ```
-panel-facturas/
+zafirosCalc/   (nombre local; repo GitHub: articuloscompuestos)
 ├── app/
-│   ├── Http/Controllers/     # Controladores
-│   ├── Models/               # Modelos Eloquent
-│   └── Services/             # Lógica de negocio
-├── database/
-│   ├── migrations/           # Estructura BD
-│   └── seeders/              # Datos iniciales
-├── resources/
-│   ├── views/                # Vistas Blade
-│   ├── css/                  # Estilos
-│   └── js/                   # JavaScript mínimo
-├── routes/
-│   ├── web.php               # Rutas web
-│   └── api.php               # Rutas API
-├── vendor/                   # Subir completo
-├── public/build/             # Assets compilados
-├── .cursor/rules/            # Reglas del proyecto
-└── .env                      # Configuración
+│   ├── Filament/Resources/   # Panel: productos, componentes, tipos, integración…
+│   ├── Models/
+│   └── Services/             # p. ej. EFacturaService
+├── database/migrations/
+├── docs/                     # MVP, deploy, cliente
+├── public/
+└── vendor/                   # Subir completo en hosting compartido
 ```
 
 ---
@@ -178,7 +207,7 @@ El asistente tiene configurado contexto persistente en `.cursor/rules/` y:
 
 ## 📞 Notas
 
-**Última actualización**: 2025-10-16
+**Última actualización**: 2026-05-18
 
 Para más detalles, consulta los archivos en `.cursor/rules/`.
 

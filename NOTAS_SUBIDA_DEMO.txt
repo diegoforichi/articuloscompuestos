@@ -1,0 +1,41 @@
+Zafiro — paquete para hosting (demo)
+====================================
+
+URL pública del demo (APP_URL):
+  https://demoarticuloscompuestos.facturaya.com.uy
+
+Panel Filament:
+  https://demoarticuloscompuestos.facturaya.com.uy/admin
+
+Qué incluye el ZIP
+------------------
+Código Laravel, vendor/, public/, migraciones, assets publicados de Filament
+en public/. Sin node_modules, sin .git, sin tests, sin .env (no pisar el del servidor).
+
+Si YA tenés .env en el servidor
+-------------------------------
+No lo sobrescribas al extraer. Solo reemplazá carpetas app/, bootstrap/, config/,
+database/, public/, resources/, routes/, vendor/, y archivos composer.*, artisan, .htaccess.
+
+Si es instalación nueva
+-----------------------
+Copiá deploy-env-template.env a .env, generá APP_KEY y completá DB_* en cPanel.
+
+Después de subir / extraer (SSH o Terminal cPanel, en la raíz del proyecto)
+--------------------------------------------------------------------------
+php artisan migrate --force
+php artisan optimize:clear
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan filament:optimize-clear
+php artisan filament:optimize
+
+Permisos (si fallan logs o caché):
+chmod -R 775 storage bootstrap/cache
+
+Tipos de componente (multi-rubro)
+-----------------------------------
+Tras migrate, existen tipos por defecto (metal, gem, labor, other). En el panel:
+Administración → Tipos de componente — podés crear categorías propias (harina, empaque, etc.)
+antes de cargar componentes de un negocio nuevo.
